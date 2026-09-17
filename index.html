@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browser Router</title>
+    <meta name="description" content="Production landing page that automatically routes visitors outside in-app browsers to their native browser." />
+    <meta property="og:title" content="Browser Router" />
+    <meta property="og:description" content="Production landing page that automatically routes visitors outside in-app browsers to their native browser." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900">
+    <noscript>
+      <div style="padding: 2rem; max-width: 480px; margin: 2rem auto; text-align: center; font-family: system-ui, -apple-system, sans-serif; background: #ffffff; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+        <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.75rem; color: #0f172a;">JavaScript is disabled</h2>
+        <p style="color: #475569; font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.5rem;">To visit the destination website, tap the link below:</p>
+        <a id="noscript-target-link" href="https://YOUR-DOMAIN.com/" style="display: inline-block; padding: 0.75rem 1.5rem; background: #0284c7; color: #ffffff; text-decoration: none; border-radius: 0.5rem; font-weight: 500;">Continue to Website &rarr;</a>
+      </div>
+    </noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
