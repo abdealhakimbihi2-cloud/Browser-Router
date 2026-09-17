@@ -1,11 +1,9 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Compass,
   ExternalLink,
-  ArrowRight,
   AlertTriangle,
-  MoreHorizontal,
   CheckCircle2,
 } from 'lucide-react';
 import { TARGET_URL, validateTargetUrl } from '../config.ts';
@@ -22,6 +20,8 @@ type PageState = 'initializing' | 'redirecting' | 'fallback' | 'invalid_url';
 export default function RouterLanding() {
   const [state, setState] = useState<PageState>('initializing');
   const [environment, setEnvironment] = useState<EnvironmentInfo | null>(null);
+  const [showVideo, setShowVideo] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Validate TARGET_URL once
   const validation = useMemo(() => validateTargetUrl(TARGET_URL), []);
@@ -31,27 +31,26 @@ export default function RouterLanding() {
     return createAndroidChromeIntent(TARGET_URL);
   }, []);
 
-  // Handler for manual external browser launch
-  const handleOpenExternal = useCallback(() => {
-    if (!environment) return;
+  // Handler for clicking "Open in Chrome"
+  const handleOpenChrome = useCallback(() => {
+    // 1. Immediately reveal the video as requested
+    setShowVideo(true);
 
-    if (environment.isAndroid) {
-      // Direct user action to open Chrome Intent
+    // 2. Attempt the legitimate Chrome external-browser navigation
+    if (environment?.isAndroid) {
       try {
         window.location.href = androidChromeIntent;
       } catch {
         window.location.href = TARGET_URL;
       }
     } else {
-      // iOS / other: attempt standard window navigation
-      window.location.href = TARGET_URL;
+      try {
+        window.location.href = TARGET_URL;
+      } catch {
+        // Safe navigation fallback
+      }
     }
   }, [environment, androidChromeIntent]);
-
-  // Handler for normal fallback navigation
-  const handleContinueNormal = useCallback(() => {
-    window.location.href = TARGET_URL;
-  }, []);
 
   // Main automatic routing lifecycle
   useEffect(() => {
@@ -129,7 +128,7 @@ export default function RouterLanding() {
     } else {
       // iOS / iPadOS inside TikTok:
       // Automatic external browser launching is strictly restricted by iOS WKWebView.
-      // We attempt a soft navigation once, then immediately provide clear manual instructions.
+      // Transition to fallback interface
       setState('redirecting');
 
       const iosTimer = setTimeout(() => {
@@ -219,25 +218,14 @@ export default function RouterLanding() {
 
               <p
                 id="desc-redirecting"
-                className="text-sm text-slate-500 mb-8 leading-relaxed"
+                className="text-sm text-slate-500 mb-2 leading-relaxed"
               >
                 We're opening this page in your browser.
               </p>
-
-              {/* Direct fallback link in case automatic navigation is delayed */}
-              <button
-                type="button"
-                id="btn-manual-skip"
-                onClick={handleContinueNormal}
-                className="inline-flex items-center justify-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 active:text-blue-800 transition-colors py-2 px-4 rounded-lg hover:bg-blue-50"
-              >
-                <span>Continue now</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
             </motion.div>
           )}
 
-          {/* STATE: FALLBACK (When in-app browser blocks automatic handoff) */}
+          {/* STATE: FALLBACK (When in-app browser blocks automatic handoff or manual launch) */}
           {state === 'fallback' && (
             <motion.div
               key="fallback"
@@ -269,58 +257,16 @@ export default function RouterLanding() {
                 For the best experience, open this link directly in your device's browser.
               </p>
 
-              {/* Platform-specific instruction guide */}
-              {environment?.isIOS ? (
-                <div
-                  id="guide-ios-instructions"
-                  className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 mb-6 text-left"
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      id="badge-dots-icon"
-                      className="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 mt-0.5"
-                    >
-                      <MoreHorizontal className="w-5 h-5" />
-                    </div>
-                    <div className="text-xs text-slate-700 space-y-1">
-                      <p className="font-semibold text-slate-900">
-                        How to open in Safari:
-                      </p>
-                      <p className="leading-relaxed">
-                        Tap the <strong className="font-semibold text-slate-900">• • •</strong> menu in TikTok and choose <span className="font-medium text-blue-600">Open in Browser</span> or <span className="font-medium text-blue-600">Open in Safari</span>.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-
-              {/* PRIMARY ACTION BUTTON */}
+              {/* PRIMARY ACTION BUTTON: OPEN IN CHROME */}
               <div id="actions-container" className="space-y-3">
                 <button
                   type="button"
-                  id="btn-primary-browser"
-                  onClick={handleOpenExternal}
-                  className="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium text-base shadow-sm hover:shadow transition-all"
+                  id="btn-open-in-chrome"
+                  onClick={handleOpenChrome}
+                  className="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium text-base shadow-sm hover:shadow transition-all cursor-pointer"
                 >
                   <ExternalLink className="w-5 h-5" />
-                  <span>
-                    {environment?.isAndroid
-                      ? 'Open in Chrome'
-                      : environment?.isIOS
-                      ? 'Open in Safari'
-                      : 'Open in Browser'}
-                  </span>
-                </button>
-
-                {/* SECONDARY FALLBACK BUTTON */}
-                <button
-                  type="button"
-                  id="btn-secondary-continue"
-                  onClick={handleContinueNormal}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-700 font-medium text-sm transition-colors"
-                >
-                  <span>Continue to Website</span>
-                  <ArrowRight className="w-4 h-4 text-slate-400" />
+                  <span>Open in Chrome</span>
                 </button>
               </div>
 
@@ -332,6 +278,37 @@ export default function RouterLanding() {
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                 <span>Verified secure external link</span>
               </div>
+
+              {/* VIDEO SECTION - SHOWN ONLY AFTER CLICKING "OPEN IN CHROME" */}
+              <AnimatePresence>
+                {showVideo && (
+                  <motion.div
+                    key="video-guide-section"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.35, ease: 'easeOut' }}
+                    id="video-tutorial-container"
+                    className="mt-6 pt-6 border-t border-slate-200"
+                  >
+                    <div className="w-full max-w-sm mx-auto overflow-hidden rounded-2xl shadow-sm border border-slate-200 bg-slate-950">
+                      <video
+                        ref={videoRef}
+                        id="tutorial-video"
+                        controls
+                        playsInline
+                        muted
+                        preload="metadata"
+                        className="w-full h-auto aspect-[9/16] object-contain block mx-auto rounded-2xl"
+                      >
+                        <source src="/video.mp4" type="video/mp4" />
+                        <source src="/assets/video.mp4" type="video/mp4" />
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
