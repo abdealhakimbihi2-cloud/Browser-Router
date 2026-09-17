@@ -40,7 +40,10 @@ export default function RouterLanding() {
     setTimeout(() => {
       if (videoRef.current) {
         videoRef.current.play().catch(() => {
-          // Handled safely if autoplay policies require mute or user interaction
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            videoRef.current.play().catch(() => {});
+          }
         });
       }
     }, 50);
@@ -307,7 +310,6 @@ export default function RouterLanding() {
                         autoPlay
                         controls
                         playsInline
-                        muted
                         preload="auto"
                         className="w-full h-auto object-contain block mx-auto rounded-2xl"
                       >
