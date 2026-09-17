@@ -33,8 +33,17 @@ export default function RouterLanding() {
 
   // Handler for clicking "Open in Chrome"
   const handleOpenChrome = useCallback(() => {
-    // 1. Immediately reveal the video as requested
+    // 1. Immediately reveal and play the video as requested
     setShowVideo(true);
+
+    // Immediate playback trigger on user gesture
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.play().catch(() => {
+          // Handled safely if autoplay policies require mute or user interaction
+        });
+      }
+    }, 50);
 
     // 2. Attempt the legitimate Chrome external-browser navigation
     if (environment?.isAndroid) {
@@ -295,11 +304,12 @@ export default function RouterLanding() {
                       <video
                         ref={videoRef}
                         id="tutorial-video"
+                        autoPlay
                         controls
                         playsInline
                         muted
-                        preload="metadata"
-                        className="w-full h-auto aspect-[9/16] object-contain block mx-auto rounded-2xl"
+                        preload="auto"
+                        className="w-full h-auto object-contain block mx-auto rounded-2xl"
                       >
                         <source src="/video.mp4" type="video/mp4" />
                         <source src="/assets/video.mp4" type="video/mp4" />
